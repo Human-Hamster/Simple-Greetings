@@ -1,0 +1,15 @@
+{
+  "Author": "Ayuei",
+  "Name": "Simple Greetings",
+  "Punchline": "Simple Greetings upon joining Dungeons/Raids.",
+  "Description": "Simple Greetings go a long way! This plugin can also be used with Macro Chain for more elaborate greetings!",
+  "InternalName": "simpleGreetings",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "greetings",
+    "dungeons",
+    "social",
+    "plugin"
+  ]
+}
+

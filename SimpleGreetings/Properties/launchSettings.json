@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "DungeonGreeter": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "hotReloadEnabled": false
+    }
+  }
+}
