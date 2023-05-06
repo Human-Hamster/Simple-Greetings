@@ -12,6 +12,17 @@
             "utility"
         ],
         "DalamudApiLevel": 8,
-        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip"
+        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "IconUrl": "",
+        "ImageUrls": [
+            ""
+        ],
+        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "IsHide": false,
+        "IsTestingExclusive": false,
+        "DownloadLinkTesting": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "DownloadCount": 69,
+        "LastUpdate": "1680237651"
     }
 ]
