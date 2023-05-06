@@ -12,10 +12,6 @@
             "utility"
         ],
         "DalamudApiLevel": 8,
-        "IconUrl": "",
-        "ImageUrls": [
-            ""
-        ],
         "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip"
     }
 ]
