@@ -5,14 +5,13 @@
         "Punchline": "Simple Greetings upon joining Dungeons/Raids.",
         "Description": "Simple Greetings go a long way! This plugin can also be used with Macro Chain for more elaborate greetings!",
         "InternalName": "simpleGreetings",
+	"AssemblyVersion": "2.1.10",
         "RepoUrl": "https://github.com/Human-Hamster/Simple-Greetings",
         "ApplicableVersion": "any",
         "CategoryTags": [
-            "social",
-            "utility"
+            "social"
         ],
         "DalamudApiLevel": 8,
-        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
         "IconUrl": "",
         "ImageUrls": [
             ""
