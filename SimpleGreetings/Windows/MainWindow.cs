@@ -20,7 +20,6 @@ public class MainWindow : Window, IDisposable
     // Macro Settings
     private bool macroEnabled;
     private int macro;
-    private int macroFirst;
     private string[] executeOrder;
     private int macroType;
 
@@ -33,6 +32,7 @@ public class MainWindow : Window, IDisposable
         this.config = plugin.Configuration;
 
         // Text Options
+        textEnabled = config.textEnabled;
         innerText = config.greetText ?? "";
         selectedChannel = config.outputChannel;
         messageDelay = config.messageDelay;
@@ -40,6 +40,7 @@ public class MainWindow : Window, IDisposable
         // Macro Options
         macro = config.macro;
         macroType = config.macroType;
+        macroEnabled = config.macroEnabled;
 
         if (config.macroFirst) 
         {
@@ -51,7 +52,7 @@ public class MainWindow : Window, IDisposable
 
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(450, 250),
+            MinimumSize = new Vector2(560, 320),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
     }
@@ -181,6 +182,16 @@ public class MainWindow : Window, IDisposable
         }
     } 
 
+    public void InstanceSettings()
+    {
+        if (ImGui.BeginTabItem("Instance Settings"))
+        {
+            ImGui.Text("WIP: Add Instance filtering, duty/roulette/raid filtering");
+
+            ImGui.EndTabItem();
+        }
+    } 
+
     public void SaveSettings()
     {
         config.textEnabled = textEnabled;
@@ -191,14 +202,21 @@ public class MainWindow : Window, IDisposable
         config.macroEnabled = macroEnabled;
         config.macro = macro;
         config.macroType = macroType;
-        config.macroFirst = macroFirst != 0;
+        config.macroFirst = Array.IndexOf(executeOrder, "Macro") == 0;
 
         config.Save();
+
+        #if DEBUG
 
         plugin.LogXivChatEntryDebug($"Config saved with: Greet Text {config.greetText}");
         plugin.LogXivChatEntryDebug($"Config saved with: Delay {config.messageDelay}");
         plugin.LogXivChatEntryDebug($"Config saved with: output channel selection {config.outputChannel}");
         plugin.LogXivChatEntryDebug($"Config saved with: output channel {config.GetChannelOptions()[config.outputChannel]}");
+
+        plugin.LogXivChatEntryDebug($"Config saved with: MacroType {config.macroType}");
+        plugin.LogXivChatEntryDebug($"Config saved with: macroFirst {config.macroFirst}");
+
+        #endif
     }
 
     public override void Draw()
@@ -208,6 +226,7 @@ public class MainWindow : Window, IDisposable
         TextSettings();
         MacroSettings();
         GoodbyeSettings();
+        InstanceSettings();
         AdvancedSettings();
 
         ImGui.Separator();

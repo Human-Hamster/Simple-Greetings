@@ -26,11 +26,9 @@ namespace SimpleGreetings
         public readonly XivChatType[] channelOptions = {XivChatType.Party, XivChatType.Say};
         public readonly MacroType[] macroOptions = {MacroType.Individual, MacroType.Shared};
 
-
         // the below exist just to make saving less cumbersome
         [NonSerialized]
         private DalamudPluginInterface? pluginInterface;
-
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {

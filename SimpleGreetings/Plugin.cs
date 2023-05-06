@@ -28,7 +28,7 @@ namespace SimpleGreetings
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
         public Configuration Configuration { get; init; }
-        public WindowSystem WindowSystem = new("SamplePlugin");
+        public WindowSystem WindowSystem = new("Simple Greetings");
 
         private DataManager _data { get; init; }
         private readonly TerritoryHandler territoryHandler = null!;
@@ -84,26 +84,16 @@ namespace SimpleGreetings
             // TODO: Implement a method here that checks for content types 
             // Against the config options that the user provides
 
+            #if DEBUG
             this.LogXivChatEntryDebug($"Content Type: {condition.ContentType?.ToString()}");
 
-            if (condition.ContentType != null && condition.ContentType.ToString().Contains("Roulette")) {
-                var chatEntry = new XivChatEntry();
-                chatEntry.Message = this.Configuration.greetText;
-                this.queued = true;
-            }
-        }
+            #endif
 
-        public void Dispose()
-        {
-            this.WindowSystem.RemoveAllWindows();
-            MainWindow.Dispose();
-            this.CommandManager.RemoveHandler(CommandName);
-
-            // Clean up listeners
-            this.PluginInterface.UiBuilder.Draw -= DrawUI;
-            this.PluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
-            this.clientState.TerritoryChanged -= OnAreaChanged;
-            this.clientState.CfPop -= onCfPop;
+            //if (condition.ContentType != null && condition.ContentType.ToString().Contains("Roulette")) {
+            //    var chatEntry = new XivChatEntry();
+            //    chatEntry.Message = this.Configuration.greetText;
+            //}
+            this.queued = true;
         }
 
         private void OnCommand(string command, string args)
@@ -161,11 +151,13 @@ namespace SimpleGreetings
 
                 if (Configuration.macroFirst) {
                     sendMacro();
+                    await Task.Delay((Int32)(1000)); // Wait a second before deploying second to avoid spam detection
                     sendText();
                 }
                 else 
                 { 
                     sendText();
+                    await Task.Delay((Int32)(1000));
                     sendMacro();
                 }
 
@@ -222,6 +214,18 @@ namespace SimpleGreetings
         public void DrawConfigUI()
         {
             MainWindow.IsOpen = true;
+        }
+        public void Dispose()
+        {
+            this.WindowSystem.RemoveAllWindows();
+            MainWindow.Dispose();
+            this.CommandManager.RemoveHandler(CommandName);
+
+            // Clean up listeners
+            this.PluginInterface.UiBuilder.Draw -= DrawUI;
+            this.PluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
+            this.clientState.TerritoryChanged -= OnAreaChanged;
+            this.clientState.CfPop -= onCfPop;
         }
     }
 }
