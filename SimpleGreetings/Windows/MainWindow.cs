@@ -1,15 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
+using SimpleGreetings.Config;
 using Windows.Media.Capture;
 
 namespace SimpleGreetings.Windows;
+
 
 public class MainWindow : Window, IDisposable
 {
     private Plugin plugin;
     private Configuration config;
+
+    private TextSettings textSettings;
+    private MacroSettings macroSettings;
+    private InstanceSettings instanceSettings;
 
     // Text Settings
     private bool textEnabled;
@@ -23,32 +31,49 @@ public class MainWindow : Window, IDisposable
     private string[] executeOrder;
     private int macroType;
 
+    // Instance Settings
+    private bool roulettes;
+    private bool dungeons;
+    private bool allianceRaid;
+    private bool normalRaids;
+    private bool raids;
+    private bool trials;
+
+    private bool NewPartyOnlyEnable;
+
     private bool persistError { get; set;  } = false;
 
     public MainWindow(Plugin plugin) : base(
         "Simple Greetings - Pleased to meet you, pleasure to greet you!", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.plugin = plugin;
-        this.config = plugin.Configuration;
+        this.config = plugin.Config;
+
+        this.textSettings = config.textSettings;
+        this.macroSettings = config.macroSettings;
+        this.instanceSettings = config.instanceSettings;
 
         // Text Options
-        textEnabled = config.textEnabled;
-        innerText = config.greetText ?? "";
-        selectedChannel = config.outputChannel;
-        messageDelay = config.messageDelay;
+        textEnabled = textSettings.textEnabled;
+        innerText = textSettings.innerText ?? "";
+        selectedChannel = textSettings.selectedChannel;
+        messageDelay = textSettings.messageDelay;
 
         // Macro Options
-        macro = config.macro;
-        macroType = config.macroType;
-        macroEnabled = config.macroEnabled;
+        macro = macroSettings.macro;
+        macroType = macroSettings.macroType;
+        macroEnabled = macroSettings.macroEnabled;
+        executeOrder = macroSettings.executeOrder;
 
-        if (config.macroFirst) 
-        {
-            executeOrder = new string[] { "Macro", "Text" };
-        } else
-        {
-            executeOrder = new string[] { "Text", "Macro" };
-        }
+        // Roulette Options
+        roulettes = instanceSettings.Roulettes;
+        dungeons = instanceSettings.Dungeons;
+        //allianceRaid = instanceSettings.AllianceRaid;
+        //normalRaids = instanceSettings.NormalRaids;
+        raids = instanceSettings.Raids;
+        trials = instanceSettings.Trials;
+
+        NewPartyOnlyEnable = config.OnlyActivateOnNewPartyMember;
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -57,10 +82,7 @@ public class MainWindow : Window, IDisposable
         };
     }
 
-    public void Dispose()
-    {
-        config.Save();
-    }
+    public void Dispose() { }
 
     private static void HelpMarker(string desc)
     {
@@ -148,7 +170,6 @@ public class MainWindow : Window, IDisposable
     public void GoodbyeSettings() {
         if (ImGui.BeginTabItem("Goodbye Settings")) {
             ImGui.Text("Work in Progress! Message/macro to send upon clearing");
-
             ImGui.EndTabItem();
         }
     }
@@ -178,6 +199,7 @@ public class MainWindow : Window, IDisposable
                 }
                 ImGui.TreePop();
             }
+            ImGui.Checkbox("Only Activate If New Party Member", ref NewPartyOnlyEnable); ImGui.SameLine();  HelpMarker("Only activate the greetings if at least one new member has joined your party.\nIf your party is full prior to joining the instance, the greetings won't activate.");
             ImGui.EndTabItem();
         }
     } 
@@ -186,36 +208,51 @@ public class MainWindow : Window, IDisposable
     {
         if (ImGui.BeginTabItem("Instance Settings"))
         {
-            ImGui.Text("WIP: Add Instance filtering, duty/roulette/raid filtering");
+            //ImGui.Text("WIP: Add Instance filtering, duty/roulette/raid filtering");
 
+            ImGui.Checkbox("Roulettes", ref roulettes);
+            ImGui.Checkbox("Dungeons", ref dungeons);
+            //ImGui.Checkbox("Alliance Raid", ref allianceRaid);
+            //ImGui.Checkbox("Normal Raids", ref normalRaids);
+            ImGui.Checkbox("Normal/Endgame/Alliance Raids", ref raids);
+            ImGui.Checkbox("Trials", ref trials);
             ImGui.EndTabItem();
         }
     } 
 
     public void SaveSettings()
     {
-        config.textEnabled = textEnabled;
-        config.greetText = innerText;
-        config.messageDelay = messageDelay;
-        config.outputChannel = selectedChannel;
+        // Save Text Settings
+        this.textSettings.textEnabled = textEnabled;
+        this.textSettings.innerText = innerText;
+        this.textSettings.messageDelay = messageDelay;
+        this.textSettings.selectedChannel = selectedChannel;
 
-        config.macroEnabled = macroEnabled;
-        config.macro = macro;
-        config.macroType = macroType;
-        config.macroFirst = Array.IndexOf(executeOrder, "Macro") == 0;
+        // Save Macro Settings
+        this.macroSettings.macroEnabled = macroEnabled;
+        this.macroSettings.macro = macro;
+        this.macroSettings.macroType = macroType;
+        this.macroSettings.executeOrder = executeOrder;
+
+        // Save Instance Settings
+        //this.instanceSettings.NormalRaids = normalRaids;
+        this.instanceSettings.Raids = raids;
+        //this.instanceSettings.AllianceRaid = allianceRaid;  
+        this.instanceSettings.Dungeons = dungeons;
+        this.instanceSettings.Roulettes = roulettes;
 
         config.Save();
 
         #if DEBUG
+        plugin.LogXivChatEntryDebug($"Config saved with: Greet Text {config.textSettings.innerText}");
+        plugin.LogXivChatEntryDebug($"Config saved with: Delay {config.textSettings.messageDelay}");
+        plugin.LogXivChatEntryDebug($"Config saved with: output channel {config.GetChannelOptions()[config.textSettings.selectedChannel]}");
 
-        plugin.LogXivChatEntryDebug($"Config saved with: Greet Text {config.greetText}");
-        plugin.LogXivChatEntryDebug($"Config saved with: Delay {config.messageDelay}");
-        plugin.LogXivChatEntryDebug($"Config saved with: output channel selection {config.outputChannel}");
-        plugin.LogXivChatEntryDebug($"Config saved with: output channel {config.GetChannelOptions()[config.outputChannel]}");
+        plugin.LogXivChatEntryDebug($"Config saved with: MacroType {config.macroSettings.macroType}");
+        plugin.LogXivChatEntryDebug($"Config saved with: macroFirst {config.macroSettings.MacroFirst()}");
 
-        plugin.LogXivChatEntryDebug($"Config saved with: MacroType {config.macroType}");
-        plugin.LogXivChatEntryDebug($"Config saved with: macroFirst {config.macroFirst}");
-
+        plugin.LogXivChatEntryDebug($"Instance Config saved with: Dungeon {config.instanceSettings.Dungeons}");
+        plugin.LogXivChatEntryDebug($"Instance Config saved with: Roulettes {config.instanceSettings.Roulettes}");
         #endif
     }
 
