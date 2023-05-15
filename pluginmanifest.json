@@ -16,11 +16,11 @@
         "ImageUrls": [
             ""
         ],
-        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "DownloadLinkInstall": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.2/latest.zip",
         "IsHide": false,
         "IsTestingExclusive": false,
-        "DownloadLinkTesting": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.1/latest.zip",
+        "DownloadLinkTesting": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.2/test.zip",
+        "DownloadLinkUpdate": "https://github.com/Human-Hamster/Simple-Greetings/releases/download/v0.2/latest.zip",
         "DownloadCount": 69,
         "LastUpdate": "1683376930"
     }
