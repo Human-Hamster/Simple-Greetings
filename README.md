@@ -14,4 +14,4 @@ Now the `Simple Greetings` plugin will be available via the `social` tab.
 ## Credit
 Instructions from [DalamudPluginRepo](https://github.com/UnknownX7/DalamudPluginRepo)
 
-Riri for Plugin Icon
+[Riri for Plugin Icon](https://raw.githubusercontent.com/Human-Hamster/Simple-Greetings/master/icon.png)
