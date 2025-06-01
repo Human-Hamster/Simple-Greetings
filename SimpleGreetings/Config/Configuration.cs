@@ -2,7 +2,6 @@ using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using Dalamud.Plugin;
 using SimpleGreetings.GameData;
-using SimpleGreetings.Windows;
 using System;
 using System.Linq;
 
@@ -35,17 +34,17 @@ namespace SimpleGreetings.Config
 
         public void Save()
         {
-            pluginInterface!.SavePluginConfig(this);
+            this.pluginInterface!.SavePluginConfig(this);
         }
 
         public string[] GetChannelOptions()
         {
-            return channelOptions.Select(x => x.ToString()).ToArray();
+            return [.. channelOptions.Select(x => x.ToString())];
         }
 
         public string[] GetMacroOptions()
         {
-            return macroOptions.Select(x => x.ToString()).ToArray();
+            return [.. macroOptions.Select(x => x.ToString())];
         }
     }
 }

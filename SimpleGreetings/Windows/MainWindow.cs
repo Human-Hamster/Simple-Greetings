@@ -36,7 +36,7 @@ public class MainWindow : Window, IDisposable
     private bool raids;
     private bool trials;
 
-    private bool NewPartyOnlyEnable;
+    private bool newPartyOnlyEnable;
 
     private bool persistError { get; set;  } = false;
 
@@ -70,7 +70,7 @@ public class MainWindow : Window, IDisposable
         raids = instanceSettings.Raids;
         trials = instanceSettings.Trials;
 
-        NewPartyOnlyEnable = config.OnlyActivateOnNewPartyMember;
+        newPartyOnlyEnable = config.OnlyActivateOnNewPartyMember;
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -111,7 +111,7 @@ public class MainWindow : Window, IDisposable
             ImGui.Separator();
             ImGui.SetNextItemWidth(120);
             ImGui.SliderFloat("Message Delay", ref messageDelay, 0.0f, 5.0f);
-            ImGui.SameLine(); HelpMarker("Delay the greet text when join the instance. CTRL+Click for manual input.");
+            ImGui.SameLine(); HelpMarker("Delay the greet text when you join a new instance. CTRL+Click for manual input.");
 
             ImGui.SetNextItemWidth(120);
             ImGui.Combo("Output Channel", ref selectedChannel, config.GetChannelOptions(), 2);
@@ -164,7 +164,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
-    public void GoodbyeSettings() {
+    public static void GoodbyeSettings() {
         if (ImGui.BeginTabItem("Goodbye Settings")) {
             ImGui.Text("Work in Progress! Message/macro to send upon clearing");
             ImGui.EndTabItem();
@@ -196,7 +196,7 @@ public class MainWindow : Window, IDisposable
                 }
                 ImGui.TreePop();
             }
-            ImGui.Checkbox("Only Activate If New Party Member", ref NewPartyOnlyEnable); ImGui.SameLine();  HelpMarker("Only activate the greetings if at least one new member has joined your party.\nIf your party is full prior to joining the instance, the greetings won't activate.");
+            ImGui.Checkbox("Only Activate If New Party Member", ref newPartyOnlyEnable); ImGui.SameLine();  HelpMarker("Only activate the greetings if at least one new member has joined your party.\nIf your party is full prior to joining the instance, the greetings won't activate.");
             ImGui.EndTabItem();
         }
     } 
@@ -241,15 +241,15 @@ public class MainWindow : Window, IDisposable
         config.Save();
 
         #if DEBUG
-        plugin.LogXivChatEntryDebug($"Config saved with: Greet Text {config.textSettings.innerText}");
-        plugin.LogXivChatEntryDebug($"Config saved with: Delay {config.textSettings.messageDelay}");
-        plugin.LogXivChatEntryDebug($"Config saved with: output channel {config.GetChannelOptions()[config.textSettings.selectedChannel]}");
+        plugin.PlugLog.Debug($"Config saved with: Greet Text {config.textSettings.innerText}");
+        plugin.PlugLog.Debug($"Config saved with: Delay {config.textSettings.messageDelay}");
+        plugin.PlugLog.Debug($"Config saved with: output channel {config.GetChannelOptions()[config.textSettings.selectedChannel]}");
 
-        plugin.LogXivChatEntryDebug($"Config saved with: MacroType {config.macroSettings.macroType}");
-        plugin.LogXivChatEntryDebug($"Config saved with: macroFirst {config.macroSettings.MacroFirst()}");
+        plugin.PlugLog.Debug($"Config saved with: MacroType {config.macroSettings.macroType}");
+        plugin.PlugLog.Debug($"Config saved with: macroFirst {config.macroSettings.MacroFirst()}");
 
-        plugin.LogXivChatEntryDebug($"Instance Config saved with: Dungeon {config.instanceSettings.Dungeons}");
-        plugin.LogXivChatEntryDebug($"Instance Config saved with: Roulettes {config.instanceSettings.Roulettes}");
+        plugin.PlugLog.Debug($"Instance Config saved with: Dungeon {config.instanceSettings.Dungeons}");
+        plugin.PlugLog.Debug($"Instance Config saved with: Roulettes {config.instanceSettings.Roulettes}");
         #endif
     }
 

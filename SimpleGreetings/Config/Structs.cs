@@ -36,7 +36,7 @@ namespace SimpleGreetings.Config
     {
         public bool macroEnabled { get; set; } = false;
         public int macro { get; set; } = 0;
-        public string[] executeOrder { get; set; } = { "Macro", "Text" };
+        public string[] executeOrder { get; set; } = ["Macro", "Text"];
         public int macroType { get; set; } = 0; 
         public void Merge(MacroSettings other)
         {
@@ -64,7 +64,7 @@ namespace SimpleGreetings.Config
 
         public bool CheckContentType(uint contentType)
         {
-            switch(contentType)
+            switch (contentType)
             {
                 case (0):
                     return Roulettes;
