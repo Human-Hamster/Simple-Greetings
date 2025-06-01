@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using SimpleGreetings.Config;
-using Windows.Media.Capture;
 
 namespace SimpleGreetings.Windows;
 

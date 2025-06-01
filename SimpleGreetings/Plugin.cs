@@ -1,19 +1,15 @@
 using Dalamud.Game.Command;
-using Dalamud.IoC;
-using Dalamud.Plugin;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Party;
-using Dalamud.Game.Gui;
 using Dalamud.Game.Text;
-using Dalamud.Interface.Windowing;
-using SimpleGreetings.Windows;
-using Dalamud.Data;
-using SimpleGreetings.Handlers;
-using Lumina.Excel.GeneratedSheets;
-using System.Threading.Tasks;
 using Dalamud.Game.Text.SeStringHandling;
-using System;
+using Dalamud.Interface.Windowing;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using ECommons;
+using Lumina.Excel.Sheets;
 using SimpleGreetings.Config;
+using SimpleGreetings.Windows;
+using System;
+using System.Threading.Tasks;
 
 namespace SimpleGreetings
 {
@@ -22,43 +18,40 @@ namespace SimpleGreetings
         public string Name => "Simple Greetings";
         private const string CommandName = "/simplegreet";
 
-        private DalamudPluginInterface PluginInterface { get; init; }
-        private CommandManager CommandManager { get; init; }
+        private IDalamudPluginInterface PluginInterface { get; init; }
+        private ICommandManager CommandManager { get; init; }
 
         public Configuration Config { get; init; }
         public WindowSystem WindowSystem = new("Simple Greetings");
 
-        private DataManager _data { get; init; }
-        private readonly TerritoryHandler territoryHandler = null!;
+        private IDataManager _data { get; init; }
 
         private MainWindow MainWindow { get; init; }
-        private ChatGui chatGui { get; init; }
-        private ClientState clientState { get; init; }
+        private IChatGui chatGui { get; init; }
+        private IClientState clientState { get; init; }
 
-        private PartyList party { get; init; }
+        private IPartyList party { get; init; }
         private bool queued = false;
 
         private int LastPartySize { get; set; } = 0;
 
         public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] CommandManager commandManager,
-            [RequiredVersion("1.0")] DataManager dataManager,
-            [RequiredVersion("1.0")] ChatGui chatGui, 
-            [RequiredVersion("1.0")] PartyList party, 
-            [RequiredVersion("1.0")] ClientState clientState)
+            IDalamudPluginInterface pluginInterface,
+            ICommandManager commandManager,
+            IDataManager dataManager,
+            IChatGui chatGui,
+            IPartyList party,
+            IClientState clientState)
         {
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
             this._data = dataManager;
-            this.territoryHandler = new TerritoryHandler(dataManager);
             this.party = party;
 
             this.chatGui = chatGui;
             this.clientState = clientState;
 
-            this.Config = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Config.Initialize(this.PluginInterface);
+            this.Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
             // you might normally want to embed resources and load them from the manifest stream
             //var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
@@ -80,19 +73,19 @@ namespace SimpleGreetings
             chatGui.ChatMessage += onChatMessage;
         }
 
-        public void onChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+        public void onChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            if(type == XivChatType.ErrorMessage)
+            if (type == XivChatType.ErrorMessage)
             {
-                #if DEBUG
+#if DEBUG
                 this.LogXivChatEntryDebug($"Error Message: {message.TextValue.ToString().Trim()}");
-                #endif
+#endif
 
                 if (message.TextValue.ToString().Trim().Contains("Your registration is withdrawn"))
                 {
-                    #if DEBUG
+#if DEBUG
                     this.LogXivChatEntryDebug($"Queued greet flag is dequeued");
-                    #endif
+#endif
 
                     this.LastPartySize = 0;
                     this.queued = false;
@@ -100,25 +93,24 @@ namespace SimpleGreetings
             }
         }
 
-        private void onCfPop(object? sender, ContentFinderCondition condition)
+        private void onCfPop(ContentFinderCondition condition)
         {
             // TODO: Implement a method here that checks for content types 
             // Against the config options that the user provides
 
-            #if DEBUG
-            this.LogXivChatEntryDebug($"Content Type: {condition.ContentType?.ToString()}");
-            this.LogXivChatEntryDebug($"Content Type Row: {condition.ContentType.Row.ToString()}");
+#if DEBUG
+            this.LogXivChatEntryDebug($"Content Type: {condition.ContentType}");
             this.LogXivChatEntryDebug($"Content Type Value: {condition.ContentType.Value}");
             this.LogXivChatEntryDebug($"Party Length: {party.Length}");
-            #endif
+#endif
 
-            if(Config.instanceSettings.CheckContentType(condition.ContentType.Row))
+            if (Config.instanceSettings.CheckContentType(condition.ContentType.RowId))
             {
                 this.queued = true;
                 this.LastPartySize = party.Length;
-                #if DEBUG
-                this.LogXivChatEntryDebug($"Error Message: {Config.instanceSettings.CheckContentType(condition.ContentType.Row)}");
-                #endif
+#if DEBUG
+                this.LogXivChatEntryDebug($"Error Message: {Config.instanceSettings.CheckContentType(condition.ContentType.RowId)}");
+#endif
             }
         }
 
@@ -136,12 +128,12 @@ namespace SimpleGreetings
                 {
                     LogXivChatEntryDebug("Couldn't find Macro Chain plugin. Are you sure it's installed?");
                     return;
-                } 
+                }
 
                 if (Config.macroSettings.macro == -1 || Config.macroSettings.macro > 99 || Config.macroSettings.macro < 1)
                 {
                     LogXivChatEntryDebug($"Macro #{Config.macroSettings.macro} is not valid, could not send macro greeting.");
-                } 
+                }
                 else
                 {
                     var macroHandler = GetMacroChainHandler();
@@ -154,27 +146,28 @@ namespace SimpleGreetings
         {
             if (Config.textSettings.textEnabled)
             {
-                if (this.Config.textSettings.innerText.Trim().Length == 0) {
+                if (this.Config.textSettings.innerText.Trim().Length == 0)
+                {
                     LogXivChatEntryDebug("There's no greet message to send!");
-                } 
+                }
                 else
                 {
-                    this.chatGui.PrintChat(
-                        CreateChatMessage(Config.textSettings.innerText, 
+                    this.chatGui.Print(
+                        CreateChatMessage(Config.textSettings.innerText,
                                           Config.channelOptions[Config.textSettings.selectedChannel])
                         );
                 }
             }
         }
 
-        private async void OnAreaChanged(object? sender, ushort area)
+        private async void OnAreaChanged(ushort area)
         {
             if (!this.queued)
             {
                 return;
             }
 
-            if (Config.OnlyActivateOnNewPartyMember &&  (this.party.Length > this.LastPartySize))
+            if (Config.OnlyActivateOnNewPartyMember && (this.party.Length > this.LastPartySize))
             {
                 this.queued = false;
                 this.LastPartySize = 0;
@@ -186,13 +179,14 @@ namespace SimpleGreetings
 
             var macroFirst = Config.macroSettings.MacroFirst();
 
-            if (macroFirst) {
+            if (macroFirst)
+            {
                 sendMacro();
                 await Task.Delay((Int32)(1000)); // Wait a second before deploying second to avoid spam detection
                 sendText();
             }
-            else 
-            { 
+            else
+            {
                 sendText();
                 await Task.Delay((Int32)(1000));
                 sendMacro();
@@ -208,11 +202,12 @@ namespace SimpleGreetings
             //var message = new SeString(payload);
             //this.chatGui.Print(message);
 
-            #if DEBUG
+
+
+#if DEBUG
             this.LogXivChatEntryDebug($"Terrority changed to {area}");
-            this.LogXivChatEntryDebug($"Territory is {this.territoryHandler.getTerritoryData(area).Name}");
-            this.LogXivChatEntryDebug($"Territory is (raw string) {this.territoryHandler.getTerritoryData(area).RawString}");
-            #endif
+            this.LogXivChatEntryDebug($"Territory is {ECommons.TerritoryName.GetTerritoryName(area)}");
+#endif
         }
 
         public bool IsMacroChainLoaded()
@@ -220,7 +215,7 @@ namespace SimpleGreetings
             return this.CommandManager.Commands.ContainsKey("/runmacro");
         }
 
-        public CommandInfo.HandlerDelegate GetMacroChainHandler()
+        public IReadOnlyCommandInfo.HandlerDelegate GetMacroChainHandler()
         {
             return this.CommandManager.Commands["/runmacro"].Handler;
         }
@@ -237,10 +232,10 @@ namespace SimpleGreetings
         public void LogXivChatEntryDebug(string text)
         {
             var chatEntry = new XivChatEntry();
-            chatEntry.Message = text; 
+            chatEntry.Message = text;
             chatEntry.Type = XivChatType.Debug;
 
-            this.chatGui.PrintChat(chatEntry);
+            this.chatGui.Print(chatEntry);
         }
 
         private void DrawUI()
@@ -258,6 +253,7 @@ namespace SimpleGreetings
             this.WindowSystem.RemoveAllWindows();
             MainWindow.Dispose();
             this.CommandManager.RemoveHandler(CommandName);
+            ECommonsMain.Dispose();
 
             // Clean up listeners
             this.PluginInterface.UiBuilder.Draw -= DrawUI;

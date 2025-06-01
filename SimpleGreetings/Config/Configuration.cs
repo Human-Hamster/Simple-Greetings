@@ -19,16 +19,16 @@ namespace SimpleGreetings.Config
         protected internal InstanceSettings instanceSettings { get; set; } = new InstanceSettings();
 
         // Refactor this later, convert from string to enum etc
-        public readonly XivChatType[] channelOptions = { XivChatType.Party, XivChatType.Say };
-        public readonly MacroType[] macroOptions = { MacroType.Individual, MacroType.Shared };
+        public readonly XivChatType[] channelOptions = [XivChatType.Party, XivChatType.Say];
+        public readonly MacroType[] macroOptions = [MacroType.Individual, MacroType.Shared];
 
         protected internal bool OnlyActivateOnNewPartyMember { get; set; } = true;
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
-        private DalamudPluginInterface? pluginInterface;
+        private IDalamudPluginInterface? pluginInterface;
 
-        public void Initialize(DalamudPluginInterface pluginInterface)
+        public void Initialize(IDalamudPluginInterface pluginInterface)
         {
             this.pluginInterface = pluginInterface;
         }
