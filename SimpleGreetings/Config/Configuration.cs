@@ -12,20 +12,24 @@ namespace SimpleGreetings.Config
     {
         public int Version { get; set; } = 1;
 
-        // Text Settings
-        protected internal TextSettings textSettings { get; set; } = new TextSettings();
-        protected internal MacroSettings macroSettings { get; set; } = new MacroSettings();
-        protected internal InstanceSettings instanceSettings { get; set; } = new InstanceSettings();
+        // Changed to public properties
+        public InstanceSettings InstanceSettings { get; set; }
+        public RpSettings RpSettings { get; set; }
 
         // Refactor this later, convert from string to enum etc
-        public readonly XivChatType[] channelOptions = [XivChatType.Party, XivChatType.Say];
-        public readonly MacroType[] macroOptions = [MacroType.Individual, MacroType.Shared];
-
-        protected internal bool OnlyActivateOnNewPartyMember { get; set; } = true;
+        internal static readonly XivChatType[] channelOptions = [XivChatType.Party, XivChatType.Say];
+        internal static readonly MacroType[] macroOptions = [MacroType.Individual, MacroType.Shared];
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
         private IDalamudPluginInterface? pluginInterface;
+
+        public Configuration()
+        {
+            // Initialize the new properties
+            InstanceSettings = new InstanceSettings();
+            RpSettings = new RpSettings();
+        }
 
         public void Initialize(IDalamudPluginInterface pluginInterface)
         {
@@ -37,15 +41,14 @@ namespace SimpleGreetings.Config
             this.pluginInterface!.SavePluginConfig(this);
         }
 
-        public string[] GetChannelOptions()
+        public static string[] GetChannelOptions()
         {
             return [.. channelOptions.Select(x => x.ToString())];
         }
 
-        public string[] GetMacroOptions()
+        public static string[] GetMacroOptions()
         {
             return [.. macroOptions.Select(x => x.ToString())];
         }
     }
 }
-

@@ -59,7 +59,7 @@ namespace SimpleGreetings
             ICommandManager commandManager,
             IDataManager dataManager,
             IChatGui chatGui,
-            IPluginLog logger, 
+            IPluginLog logger,
             IPartyList party,
             IGameGui gameGui,
             ICondition condition,
@@ -77,7 +77,8 @@ namespace SimpleGreetings
 
             PlugLog = logger;
 
-            Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            //Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Config = new Configuration();
             Config.Initialize(PluginInterface);
             ECommonsMain.Init(PluginInterface, this);
 
@@ -122,7 +123,10 @@ namespace SimpleGreetings
                 }
             }
 #if DEBUG
-                this.PlugLog.Debug($"Player count: {this.playerCount}");
+            this.PlugLog.Debug($"Player count: {this.playerCount}");
+            this.PlugLog.Debug($"Territory Name: {ECommons.TerritoryName.GetTerritoryName(ClientState.TerritoryType)}");
+            this.PlugLog.Debug($"Content Type ID: {ClientState.LocalContentId}");
+            this.PlugLog.Debug($"Player currently in housing instance?: {this.InHousingInstance()}");
 #endif
 
         }
@@ -138,23 +142,25 @@ namespace SimpleGreetings
             this.PlugLog.Debug($"Party Length: {this.PartyList.Length}");
 #endif
 
-            if (Config.instanceSettings.CheckContentType(condition.ContentType.RowId))
+            if (Config.InstanceSettings.CheckContentType(condition.ContentType.RowId))
             {
                 this.queued = true;
                 this.LastPartySize = PartyList.Length;
 #if DEBUG
-                this.PlugLog.Debug($"Error Message: {Config.instanceSettings.CheckContentType(condition.ContentType.RowId)}");
+                this.PlugLog.Debug($"Error Message: {Config.InstanceSettings.CheckContentType(condition.ContentType.RowId)}");
 #endif
             }
         }
 
-        private unsafe void UpdateTick(IFramework framework)
+        private async void UpdateTick(IFramework framework)
         {
             this.CountPlayers();
 
-            //if (this.playerCountChanged) {
-            //    sendText();
-            //}
+            if (this.playerCountChanged)
+            {
+                var config = Config.RpSettings;
+                await Task.Run(() => sendGreeting(config.macroSettings.macro, config.textSettings.innerText, config.MacroFirst(), config.macroSettings.macroEnabled, config.textSettings.textEnabled, config.messageDelay));
+            }
         }
 
         private void OnCommand(string command, string args)
@@ -163,9 +169,9 @@ namespace SimpleGreetings
             MainWindow.IsOpen = true;
         }
 
-        private void sendMacro()
+        private void sendMacro(int macro, bool enabled)
         {
-            if (Config.macroSettings.macroEnabled)
+            if (enabled)
             {
                 if (!IsMacroChainLoaded())
                 {
@@ -173,14 +179,14 @@ namespace SimpleGreetings
                     return;
                 }
 
-                if (Config.macroSettings.macro == -1 || Config.macroSettings.macro > 99 || Config.macroSettings.macro < 1)
+                if (macro == -1 || macro > 99 || macro < 1)
                 {
-                    PlugLog.Debug($"Macro #{Config.macroSettings.macro} is not valid, could not send macro greeting.");
+                    PlugLog.Debug($"Macro #{macro} is not valid, could not send macro greeting.");
                 }
                 else
                 {
                     var macroHandler = GetMacroChainHandler();
-                    macroHandler("/runmacro", Config.macroSettings.ToString());
+                    macroHandler("/runmacro", macro.ToString());
                 }
             }
         }
@@ -213,7 +219,7 @@ namespace SimpleGreetings
                 GameObject* gameObject = objects[i];
                 Character* characterPtr = (Character*)gameObject;
 
-                if (gameObject == null || gameObject == localPlayerGameObject || !gameObject->IsCharacter() || (ObjectKind)characterPtr->GameObject.ObjectKind != ObjectKind.Player )
+                if (gameObject == null || gameObject == localPlayerGameObject || !gameObject->IsCharacter() || (ObjectKind)characterPtr->GameObject.ObjectKind != ObjectKind.Player)
                 {
                     continue;
                 }
@@ -224,8 +230,8 @@ namespace SimpleGreetings
             if (count != 0 && this.playerCount != 0 && this.playerCount != count)
             {
                 this.playerCountChanged = true;
-            } 
-            else 
+            }
+            else
             {
                 this.playerCountChanged = false;
             }
@@ -233,11 +239,11 @@ namespace SimpleGreetings
             this.playerCount = count;
         }
 
-        private void sendText()
+        private void sendText(string msg, bool enabled)
         {
-            if (Config.textSettings.textEnabled)
+            if (enabled)
             {
-                if (this.Config.textSettings.innerText.Trim().Length == 0)
+                if (msg.Trim().Length == 0)
                 {
                     PlugLog.Debug("There's no greet message to send!");
                 }
@@ -245,11 +251,31 @@ namespace SimpleGreetings
                 {
                     try
                     {
-                        Chat.SendMessage(Chat.SanitiseText(this.Config.textSettings.innerText));
-                    } catch (Exception e) { 
+                        Chat.SendMessage(Chat.SanitiseText(msg));
+                    }
+                    catch (Exception e)
+                    {
                         PlugLog.Debug($"There is a problem with the greeting message: {e.Message}");
                     }
                 }
+            }
+        }
+
+        private async void sendGreeting(int macro, string textMessage, bool macroFirst, bool macroEnabled, bool textEnabled, float messageDelay)
+        {
+            await Task.Delay((Int32)(messageDelay * 1000));
+
+            if (macroFirst)
+            {
+                sendMacro(macro, macroEnabled);
+                await Task.Delay((Int32)(1000)); // Wait a second before deploying second to avoid spam detection
+                sendText(textMessage, textEnabled);
+            }
+            else
+            {
+                sendText(textMessage, textEnabled);
+                await Task.Delay((Int32)(1000));
+                sendMacro(macro, macroEnabled);
             }
         }
 
@@ -260,7 +286,9 @@ namespace SimpleGreetings
                 return;
             }
 
-            if (Config.OnlyActivateOnNewPartyMember && (this.PartyList.Length > this.LastPartySize))
+            var config = Config.InstanceSettings;
+
+            if (config.OnlyActivateOnNewPartyMember && (this.PartyList.Length > this.LastPartySize))
             {
                 this.queued = false;
                 this.LastPartySize = 0;
@@ -268,22 +296,8 @@ namespace SimpleGreetings
             }
 
             this.PlugLog.Debug("Flag detected. Deploying Greetings");
-            await Task.Delay((Int32)(this.Config.textSettings.messageDelay * 1000));
 
-            var macroFirst = Config.macroSettings.MacroFirst();
-
-            if (macroFirst)
-            {
-                sendMacro();
-                await Task.Delay((Int32)(1000)); // Wait a second before deploying second to avoid spam detection
-                sendText();
-            }
-            else
-            {
-                sendText();
-                await Task.Delay((Int32)(1000));
-                sendMacro();
-            }
+            await Task.Run(() => sendGreeting(config.macroSettings.macro, config.textSettings.innerText, config.MacroFirst(), config.macroSettings.macroEnabled, config.textSettings.textEnabled, config.messageDelay));
 
             this.queued = false;
 
@@ -301,6 +315,21 @@ namespace SimpleGreetings
         public IReadOnlyCommandInfo.HandlerDelegate GetMacroChainHandler()
         {
             return this.CommandManager.Commands["/runmacro"].Handler;
+        }
+
+        public bool InHousingInstance()
+        {
+            // TODO: Create a Territory cache for zone names
+            // OR, just get the sheet?
+            if (ECommons.TerritoryName.GetTerritoryName(ClientState.TerritoryType).EndsWith("Apartment")
+            || ECommons.TerritoryName.GetTerritoryName(ClientState.TerritoryType).Contains("Private Cottage")
+            || ECommons.TerritoryName.GetTerritoryName(ClientState.TerritoryType).Contains("Private Mansion")
+            || ECommons.TerritoryName.GetTerritoryName(ClientState.TerritoryType).Contains("Private House"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private static XivChatEntry CreateChatMessage(string text, XivChatType type)
