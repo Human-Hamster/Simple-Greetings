@@ -46,10 +46,10 @@ namespace SimpleGreetings
 
         private int playerCount { get; set; }
 
-        private bool playerCountChanged { get; set; }
+        internal bool playerCountChanged = false;
 
         private IPartyList PartyList { get; init; }
-        private bool queued = false;
+        internal bool queued = false;
 
         private int LastPartySize { get; set; } = 0;
 
@@ -77,8 +77,8 @@ namespace SimpleGreetings
 
             PlugLog = logger;
 
-            //Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Config = new Configuration();
+            Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            //Config = new Configuration();
             Config.Initialize(PluginInterface);
             ECommonsMain.Init(PluginInterface, this);
 
@@ -154,13 +154,15 @@ namespace SimpleGreetings
 
         private async void UpdateTick(IFramework framework)
         {
-            this.CountPlayers();
-
             if (this.playerCountChanged)
             {
                 var config = Config.RpSettings;
+#if DEBUG
+                this.PlugLog.Debug($"Firing RP message. Player count changed.");
+#endif
                 await Task.Run(() => sendGreeting(config.macroSettings.macro, config.textSettings.innerText, config.MacroFirst(), config.macroSettings.macroEnabled, config.textSettings.textEnabled, config.messageDelay));
             }
+            this.CountPlayers();
         }
 
         private void OnCommand(string command, string args)
@@ -185,8 +187,12 @@ namespace SimpleGreetings
                 }
                 else
                 {
+
+#if DEBUG
+                    this.PlugLog.Debug($"Firing Macro.");
+#endif
                     var macroHandler = GetMacroChainHandler();
-                    macroHandler("/runmacro", macro.ToString());
+                    macroHandler("/nextmacro", macro.ToString());
                 }
             }
         }
@@ -251,6 +257,10 @@ namespace SimpleGreetings
                 {
                     try
                     {
+
+#if DEBUG
+                        this.PlugLog.Debug($"Firing text santised.");
+#endif
                         Chat.SendMessage(Chat.SanitiseText(msg));
                     }
                     catch (Exception e)
@@ -263,6 +273,14 @@ namespace SimpleGreetings
 
         private async void sendGreeting(int macro, string textMessage, bool macroFirst, bool macroEnabled, bool textEnabled, float messageDelay)
         {
+            while (Condition[ConditionFlag.BetweenAreas])
+            {
+#if DEBUG
+                this.PlugLog.Debug("Waiting for area to load");
+                await Task.Delay((Int32)(100));
+#endif
+            }
+
             await Task.Delay((Int32)(messageDelay * 1000));
 
             if (macroFirst)
