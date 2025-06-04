@@ -260,6 +260,13 @@ public class MainWindow : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
+#if DEBUG
+            if (ImGui.BeginTabItem("Test Settings"))
+            {
+                ImGui.Checkbox("Player Changed Flag test", ref plugin.playerCountChanged);
+                ImGui.Checkbox("Queue Pop Flag test", ref plugin.queued);
+            }
+#endif
             ImGui.EndTabBar();
         }
 
